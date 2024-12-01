@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+model Users {
+  user_id     String          @id @default(cuid())
+  email       String          @unique
+  username    String?     
+  source      String          @default("google") 
+  status      UserStatus      @default(active)   
+  created_at  DateTime        @default(now())     
+  updated_at  DateTime        @updatedAt          
+  deleted_at  DateTime?
+
+  topics         Topic[]
+  shortenedLinks ShortenedLink[]
+
+  @@map("users")
+}
+
+model Topic {
+  topic_id    String          @id @default(uuid())
+  user_id     String
+  name        String
+  is_deleted  Boolean         @default(false)
+  created_at  DateTime        @default(now())
+
+  user           Users           @relation(fields: [user_id], references: [user_id])
+  shortenedLinks ShortenedLink[]
+
+  @@index([user_id])
+  @@unique([name, user_id], name: "topic_user_id")
+  @@map("topics")
+}
+
+model ShortenedLink {
+  link_id        String        @id
+  long_url       String        @db.Text
+  topic_id       String?
+  user_id        String
+  is_custom_alias Boolean
+  created_at     DateTime      @default(now())
+
+  user        Users        @relation(fields: [user_id], references: [user_id])
+  topic       Topic?       @relation(fields: [topic_id], references: [topic_id])
+  clickEvents ClickEvent[]
+
+  @@index([user_id])
+  @@index([created_at])
+
+  @@map("shortened_links")
+}
+
+model ClickEvent {
+  event_id     Int          @id @default(autoincrement())
+  link_id      String
+  timestamp    DateTime     @default(now())
+  ip           String?
+  user_agent   String?
+  os           String?
+  device_type  String?
+  geolocation  String?
+  meta         Json?
+  date         DateTime     @db.Date
+
+  shortenedLink ShortenedLink @relation(fields: [link_id], references: [link_id])
+
+  @@index([link_id])
+  @@index([timestamp])
+  @@index([date])
+
+  @@map("click_events")
+}
