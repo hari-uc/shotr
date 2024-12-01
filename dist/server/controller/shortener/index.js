@@ -1,18 +1,21 @@
-import z from "zod";
-import prisma from "../../../config/prisma";
-import logger from "../../../utils/logger";
-import { responseWrapper } from "../../../utils/resonseWrapper";
-import { Request, Response } from "express";
-import { generateLinkId } from "../../../utils/generator";
-import { createLinkValidation } from "./validation";
-import { sendMessageToSQS } from "../../../utils/sqs-helper";
-import redis from "../../../utils/redisInstance";
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.redirectAlias = exports.createShortenedLink = void 0;
+const zod_1 = __importDefault(require("zod"));
+const prisma_1 = __importDefault(require("../../../config/prisma"));
+const logger_1 = __importDefault(require("../../../utils/logger"));
+const resonseWrapper_1 = require("../../../utils/resonseWrapper");
+const generator_1 = require("../../../utils/generator");
+const validation_1 = require("./validation");
+const sqs_helper_1 = require("../../../utils/sqs-helper");
+const redisInstance_1 = __importDefault(require("../../../utils/redisInstance"));
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const CACHE_TTL = 300; // 5 minutes
-
-
-async function getTopicId(topic: string, user_id: string): Promise<string> {
-    const existingTopic = await prisma.topic.findUnique({
+async function getTopicId(topic, user_id) {
+    const existingTopic = await prisma_1.default.topic.findUnique({
         where: {
             topic_user_id: {
                 name: topic,
@@ -23,12 +26,10 @@ async function getTopicId(topic: string, user_id: string): Promise<string> {
             topic_id: true
         }
     });
-
     if (existingTopic) {
         return existingTopic.topic_id;
     }
-
-    const newTopic = await prisma.topic.create({
+    const newTopic = await prisma_1.default.topic.create({
         data: {
             name: topic,
             user_id
@@ -37,36 +38,27 @@ async function getTopicId(topic: string, user_id: string): Promise<string> {
             topic_id: true
         }
     });
-
-
     return newTopic.topic_id;
 }
-
-
-export const createShortenedLink = async (req: Request, res: Response) => {
+const createShortenedLink = async (req, res) => {
     try {
         const [validatedData, linkId] = await Promise.all([
-            createLinkValidation.parseAsync(req.body),
-            !req.body.customAlias ? generateLinkId() : Promise.resolve(req.body.customAlias)
+            validation_1.createLinkValidation.parseAsync(req.body),
+            !req.body.customAlias ? (0, generator_1.generateLinkId)() : Promise.resolve(req.body.customAlias)
         ]);
-
-
         const { longUrl, topic, customAlias } = validatedData;
         const { user_id } = req.user;
-
-        const cachedLink = await redis.get(`L:${linkId}`);
+        const cachedLink = await redisInstance_1.default.get(`L:${linkId}`);
         if (cachedLink) {
-            return responseWrapper(res, {
+            return (0, resonseWrapper_1.responseWrapper)(res, {
                 status: 400,
                 message: "Please use a different alias",
                 success: false,
                 error: "Alias already exists"
             });
         }
-
         const topicId = topic ? await getTopicId(topic, user_id) : undefined;
-
-        await prisma.shortenedLink.create({
+        await prisma_1.default.shortenedLink.create({
             data: {
                 link_id: linkId,
                 long_url: longUrl,
@@ -75,32 +67,27 @@ export const createShortenedLink = async (req: Request, res: Response) => {
                 is_custom_alias: !!customAlias
             }
         });
-
         const shortUrl = `${FRONTEND_URL}/${linkId}`;
-
-        await redis.set(`L:${linkId}`, shortUrl, 'EX', CACHE_TTL);
-
-        return responseWrapper(res, {
+        await redisInstance_1.default.set(`L:${linkId}`, shortUrl, 'EX', CACHE_TTL);
+        return (0, resonseWrapper_1.responseWrapper)(res, {
             status: 200,
             message: "Link created successfully",
             success: true,
             data: { shortUrl, createdAt: new Date() }
         });
-
-    } catch (error: any) {
-        logger.error(error);
-
-        if (error instanceof z.ZodError) {
-            return responseWrapper(res, {
+    }
+    catch (error) {
+        logger_1.default.error(error);
+        if (error instanceof zod_1.default.ZodError) {
+            return (0, resonseWrapper_1.responseWrapper)(res, {
                 status: 400,
                 message: "Bad request",
                 success: false,
                 error: error.errors[0]?.message || "Invalid request body"
             });
         }
-
         if (error.code === "P2002") {
-            return responseWrapper(res, {
+            return (0, resonseWrapper_1.responseWrapper)(res, {
                 status: 400,
                 message: "Please use a different alias",
                 success: false,
@@ -108,68 +95,60 @@ export const createShortenedLink = async (req: Request, res: Response) => {
             });
         }
         if (error.code === "P2003") {
-            return responseWrapper(res, {
+            return (0, resonseWrapper_1.responseWrapper)(res, {
                 status: 404,
                 message: "Bad request",
                 success: false,
                 error: "User/Topic not found"
             });
         }
-
-        return responseWrapper(res, {
+        return (0, resonseWrapper_1.responseWrapper)(res, {
             status: 500,
             message: "Internal server error",
             success: false,
             error: error.message
         });
     }
-}
-
-
-export const redirectAlias = async (req: Request, res: Response) => {
+};
+exports.createShortenedLink = createShortenedLink;
+const redirectAlias = async (req, res) => {
     const { alias } = req.params;
-
     try {
-        const cachedUrl = await redis.get(`R:${alias}`);
+        const cachedUrl = await redisInstance_1.default.get(`R:${alias}`);
         console.log(cachedUrl, "===");
         if (cachedUrl) {
             await recordAnalytics(req, alias);
             return res.redirect(302, cachedUrl);
         }
-
-        const link = await prisma.shortenedLink.findUnique({
+        const link = await prisma_1.default.shortenedLink.findUnique({
             where: { link_id: alias },
             select: { long_url: true }
         });
-
         if (!link) {
             return res.redirect(302, `${FRONTEND_URL}/404`);
         }
-
         console.log(link.long_url);
-        await redis.set(`R:${alias}`, link.long_url, 'EX', CACHE_TTL);
-
+        await redisInstance_1.default.set(`R:${alias}`, link.long_url, 'EX', CACHE_TTL);
         await recordAnalytics(req, alias);
-
         return res.redirect(302, link.long_url);
-
-    } catch (error) {
-        logger.error('Redirect error:', error);
+    }
+    catch (error) {
+        logger_1.default.error('Redirect error:', error);
         return res.redirect(302, `${FRONTEND_URL}/404`);
     }
 };
-
-async function recordAnalytics(req: Request, alias: string) {
+exports.redirectAlias = redirectAlias;
+async function recordAnalytics(req, alias) {
     const data = {
         ip: req.clientIp,
         userAgent: req.headers['user-agent'],
         alias,
         timestamp: Date.now()
     };
-
     try {
-        await sendMessageToSQS(JSON.stringify(data));
-    } catch (error) {
-        logger.error('Analytics error:', error);
+        await (0, sqs_helper_1.sendMessageToSQS)(JSON.stringify(data));
+    }
+    catch (error) {
+        logger_1.default.error('Analytics error:', error);
     }
 }

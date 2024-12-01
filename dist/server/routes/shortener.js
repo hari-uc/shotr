@@ -1,8 +1,9 @@
-import { Router } from "express";
-import { authenticate } from "../middleware/auth";
-import { createShortenedLink, redirectAlias } from "../controller/shortener";
-
-const router = Router();
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const shortener_1 = require("../controller/shortener");
+const router = (0, express_1.Router)();
 /**
  * @swagger
  * /shorten:
@@ -54,8 +55,7 @@ const router = Router();
  *       500:
  *         description: Internal server error.
  */
-router.post("/", authenticate, createShortenedLink);
-
+router.post("/", auth_1.authenticate, shortener_1.createShortenedLink);
 /**
  * @swagger
  * /redirect/{alias}:
@@ -78,5 +78,5 @@ router.post("/", authenticate, createShortenedLink);
  *       404:
  *         description: Alias not found, redirecting to 404 page.
  */
-router.get("/:alias", redirectAlias);
-export default router;
+router.get("/:alias", shortener_1.redirectAlias);
+exports.default = router;

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.699.0",
+    "@ngrok/ngrok": "^1.4.1",
     "@prisma/client": "^6.0.0",
     "axios": "^1.7.8",
     "cors": "^2.8.5",
@@ -28,6 +29,8 @@
     "pg-hstore": "^2.3.4",
     "request-ip": "^3.3.0",
     "sqs-consumer": "^11.2.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "ua-parser-js": "^2.0.0",
     "winston": "^3.17.0",
     "zod": "^3.23.8"
@@ -41,6 +44,8 @@
     "@types/node": "^22.10.1",
     "@types/request-ip": "^0.0.41",
     "@types/supertest": "^6.0.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.7",
     "@types/ua-parser-js": "^0.7.39",
     "@types/winston": "^2.4.4",
     "eslint": "^9.16.0",

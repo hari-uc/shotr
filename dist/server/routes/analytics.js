@@ -1,9 +1,9 @@
-import { Router } from "express";
-import { getAnalyticsByAlias, getAnalyticsByTopic, getOverAllAnalytics } from "../controller/analytics";
-import { authenticate } from "../middleware/auth";
-
-const router = Router();
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const analytics_1 = require("../controller/analytics");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
 /**
  * @swagger
  * /analytics/overall:
@@ -82,9 +82,7 @@ const router = Router();
  *       500:
  *         description: Internal server error.
  */
-
-router.get('/overall', authenticate, getOverAllAnalytics);
-
+router.get('/overall', auth_1.authenticate, analytics_1.getOverAllAnalytics);
 /**
  * @swagger
  * /analytics/topic/{topicId}:
@@ -150,9 +148,7 @@ router.get('/overall', authenticate, getOverAllAnalytics);
  *       500:
  *         description: Internal server error.
  */
-
-router.get('/topic/:topicId', authenticate, getAnalyticsByTopic);
-
+router.get('/topic/:topicId', auth_1.authenticate, analytics_1.getAnalyticsByTopic);
 /**
  * @swagger
  * /analytics/alias/{alias}:
@@ -239,6 +235,5 @@ router.get('/topic/:topicId', authenticate, getAnalyticsByTopic);
  *       500:
  *         description: Internal server error.
  */
-
-router.get('/:alias', authenticate, getAnalyticsByAlias);
-export default router;
+router.get('/:alias', auth_1.authenticate, analytics_1.getAnalyticsByAlias);
+exports.default = router;

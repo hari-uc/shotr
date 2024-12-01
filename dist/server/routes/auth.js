@@ -1,8 +1,8 @@
-import { Router } from "express";
-import { exchangeGoogleToken } from "../controller/auth";
-
-const router = Router();
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../controller/auth");
+const router = (0, express_1.Router)();
 /**
  * @swagger
  * /auth/google/exchange-token:
@@ -39,8 +39,5 @@ const router = Router();
  *       500:
  *         description: Internal server error.
  */
-
-
-router.post('/token/exchange', exchangeGoogleToken);
-
-export default router;
+router.post('/token/exchange', auth_1.exchangeGoogleToken);
+exports.default = router;
