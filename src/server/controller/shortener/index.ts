@@ -50,7 +50,6 @@ export const createShortenedLink = async (req: Request, res: Response) => {
             !req.body.customAlias ? generateLinkId() : Promise.resolve(req.body.customAlias)
         ]);
 
-
         const { longUrl, topic, customAlias } = validatedData;
         const { user_id } = req.user;
 
