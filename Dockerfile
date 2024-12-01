@@ -23,11 +23,7 @@ RUN npx prisma generate
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/.env .
 
-COPY <<EOF /app/start.sh
-#!/bin/sh
-npx prisma migrate deploy
-node dist/server/index.js
-EOF
+RUN echo '#!/bin/sh\nnpx prisma migrate deploy\nnode dist/server/index.js' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
