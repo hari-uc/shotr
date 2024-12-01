@@ -3,54 +3,73 @@
 
 ## Demo
 
-- [Demo App](https://shotr-mocha.vercel.app/)
+Visit our [Demo Application](https://shotr-mocha.vercel.app/)
 
+## Related Repositories
+
+The SHOTR project repositories
+- Frontend: [SHOTR Frontend Repository](https://github.com/hari-uc/shotr-fe)
+- Backend Server: (you are here)
 
 ## Tech Stack
 
-- **Backend:** Node.js with Express
+- **Backend Framework:** Node.js with Express
 - **Database:** PostgreSQL
-- **ORM:** Prisma ORM
-- **Caching:** Redis
-- **Authentication:** Google Sign-In, JWT
+- **ORM:** Prisma
+- **Caching Layer:** Redis with ioredis
+- **Authentication:** Secure Google Sign-In with Server JWT
 
 ## Features
 
-- **Google Sign-In:** 
-- **JWT Authentication:** 
-- **Rate Limiting:** 
-- **Caching:** 
+- **Authentication**
+  - Google Sign-In
+  - JWT-based server authentication
+  
+- **Performance & Security**
+  - Redis caching
+  - Rate limiting
 
-## Prerequisites
+## Database Schema
 
-- **Docker:** 
-- **Node.js (LTS version):** 
-- **Yarn Package Manager:** 
+ [database schema diagram](https://imgur.com/VNgXpP7).
 
-## Installation
+## API Documentation
 
-### 1. Clone the Repository
+Channels:
+- **Swagger Documentation:** [Browse API Documentation](https://new-slug-intensely.ngrok-free.app/api/docs/)
+- **Postman Collection:** [Import Collection](https://www.getpostman.com/collections/6d2d5f34-9c4d-41fe-855b-19d713e75e4f)
 
+## Getting Started
 
-```bash
-git clone https://github.com/your-repo/shotr-server.git
-cd shotr-server
-```
+### Prerequisites
 
-### 2. Create a `.env` file
+Before you begin, ensure you have the following installed:
+- Docker
+- Node.js (LTS version)
+- Yarn Package Manager
 
-```bash
-cp .env.example .env
-```
+### Installation Steps
 
+1. Clone the Repository
+   ```bash
+   git clone https://github.com/hari-uc/shotr
+   cd shotr-server
+   ```
 
-### 3. Install Dependencies
+2. Set Up Environment Variables
+   ```bash
+   cp .env.example .env
+   ```
+   Remember to update the `.env` file with your specific configuration values.
 
-```bash
-yarn install
-```
+3. Install Dependencies
+   ```bash
+   yarn install
+   ```
 
-## Running in Production
+### Production Deployment
+
+Launch the application using Docker Compose:
 
 ```bash
 sudo docker compose up -d

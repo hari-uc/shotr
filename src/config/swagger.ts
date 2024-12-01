@@ -1,15 +1,25 @@
-import swaggerJSDoc from "swagger-jsdoc";
+import swaggerJSDoc from 'swagger-jsdoc';
+const { NGROK_DOMAIN } = process.env;
 
 const options = {
-    definition: {
-        openapi: "3.1.0",
-        info: {
-            title: "Shotr API",
-            version: "1.0.0",
-        },
+  definition: {
+    openapi: '3.1.0',
+    info: {
+      title: 'Shotr API',
+      version: '1.0.0',
     },
-    apis: ["./src/server/routes/*.ts", "./src/server/controllers/*.ts"],
+    servers: [
+      {
+        url: `http://localhost:8080/api`,
+        description: 'Local server',
+      },
+      {
+        url: `https://${NGROK_DOMAIN}/api`,
+        description: 'Ngrok server',
+      },
+    ],
+  },
+  apis: ['src/server/routes/*.ts', 'src/server/controllers/*.ts'],
 };
 
 export default swaggerJSDoc(options);
-
