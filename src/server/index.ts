@@ -5,6 +5,7 @@ import logger from "../utils/logger";
 import router from "./routes";
 import workerApp from "../worker/core";
 import { ipHandler } from "./middleware/ip-handler";
+import { rateLimitter } from "./middleware/rate-limit";
 
 const port = process.env.PORT || 8080;
 
@@ -15,7 +16,7 @@ app.use(express.json());
 app.set('trust proxy', true);
 app.use(ipHandler);
 
-app.use('/api', router);
+app.use('/api', rateLimitter, router);
 
 workerApp.start();
 
