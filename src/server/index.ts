@@ -7,7 +7,7 @@ import workerApp from "../worker/core";
 import { ipHandler } from "./middleware/ip-handler";
 import { rateLimitter } from "./middleware/rate-limit";
 import connectTunnel from "../utils/ngrok";
-import swaggerOptions from "../config/swagger";
+import swaggerOptions from "../../swagger";
 import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
@@ -25,7 +25,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerOptions));
 
 workerApp.start();
 
-connectTunnel();
+// connectTunnel();
 
 app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
