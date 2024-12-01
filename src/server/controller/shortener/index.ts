@@ -11,7 +11,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL;
 const CACHE_TTL = 300; // 5 minutes
 
 
-async function getTopicId(topic: string, user_id: string): Promise<string> {
+async function getTopicId(topic: string, user_id: string): Promise<string | undefined> {
+    if (!topic) return undefined;
     const existingTopic = await prisma.topic.findUnique({
         where: {
             topic_user_id: {
@@ -69,7 +70,7 @@ export const createShortenedLink = async (req: Request, res: Response) => {
             data: {
                 link_id: linkId,
                 long_url: longUrl,
-                topic_id: topicId,
+                ...(topicId ? { topic_id: topicId } : {}),
                 user_id,
                 is_custom_alias: !!customAlias
             }
@@ -87,7 +88,7 @@ export const createShortenedLink = async (req: Request, res: Response) => {
         });
 
     } catch (error: any) {
-        logger.error(error);
+        logger.error(`Error creating link: ${error.message}`);
 
         if (error instanceof z.ZodError) {
             return responseWrapper(res, {
@@ -130,7 +131,6 @@ export const redirectAlias = async (req: Request, res: Response) => {
 
     try {
         const cachedUrl = await redis.get(`R:${alias}`);
-        console.log(cachedUrl, "===");
         if (cachedUrl) {
             await recordAnalytics(req, alias);
             return res.redirect(302, cachedUrl);
