@@ -7,7 +7,7 @@ import workerApp from "../worker/core";
 import { ipHandler } from "./middleware/ip-handler";
 import { rateLimitter } from "./middleware/rate-limit";
 import connectTunnel from "../utils/ngrok";
-import swaggerOptions from "../../swagger";
+import swaggerOptions from "../swagger";
 import swaggerUi from "swagger-ui-express";
 
 dotenv.config();

@@ -10,6 +10,6 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": false
   },
-  "include": ["src/**/*", "swagger.ts"],
+  "include": ["src/**/*", "src/swagger.ts"],
   "exclude": ["node_modules", "dist"]
 }
