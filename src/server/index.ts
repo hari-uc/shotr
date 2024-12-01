@@ -25,7 +25,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerOptions));
 
 workerApp.start();
 
-// connectTunnel();
+connectTunnel();
 
 app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
