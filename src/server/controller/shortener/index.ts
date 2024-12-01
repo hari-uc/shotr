@@ -6,7 +6,9 @@ import { Request, Response } from "express";
 import { generateLinkId } from "../../../utils/generator";
 import { createLinkValidation } from "./validation";
 import { sendMessageToSQS } from "../../../utils/sqs-helper";
+import redis from "../../../utils/redisInstance";
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const CACHE_TTL = 300; // 5 minutes
 
 
 async function getTopicId(topic: string, user_id: string): Promise<string> {
@@ -47,8 +49,19 @@ export const createShortenedLink = async (req: Request, res: Response) => {
             !req.body.customAlias ? generateLinkId() : Promise.resolve(req.body.customAlias)
         ]);
 
+
         const { longUrl, topic, customAlias } = validatedData;
         const { user_id } = req.user;
+
+        const cachedLink = await redis.get(`L:${linkId}`);
+        if (cachedLink) {
+            return responseWrapper(res, {
+                status: 400,
+                message: "Please use a different alias",
+                success: false,
+                error: "Alias already exists"
+            });
+        }
 
         const topicId = topic ? await getTopicId(topic, user_id) : undefined;
 
@@ -63,6 +76,8 @@ export const createShortenedLink = async (req: Request, res: Response) => {
         });
 
         const shortUrl = `${FRONTEND_URL}/${linkId}`;
+
+        await redis.set(`L:${linkId}`, shortUrl, 'EX', CACHE_TTL);
 
         return responseWrapper(res, {
             status: 200,
@@ -86,9 +101,9 @@ export const createShortenedLink = async (req: Request, res: Response) => {
         if (error.code === "P2002") {
             return responseWrapper(res, {
                 status: 400,
-                message: "Bad request",
+                message: "Please use a different alias",
                 success: false,
-                error: "Link ID already exists"
+                error: "Alias already exists"
             });
         }
         if (error.code === "P2003") {
@@ -112,9 +127,48 @@ export const createShortenedLink = async (req: Request, res: Response) => {
 
 export const redirectAlias = async (req: Request, res: Response) => {
     const { alias } = req.params;
-    const link = await prisma.shortenedLink.findUnique({ where: { link_id: alias }, select: { long_url: true } });
-    if (!link) return res.redirect(302, `${FRONTEND_URL}/404`);
-    const message = JSON.stringify({ ip: req.clientIp, userAgent: req.headers['user-agent'], alias });
-    sendMessageToSQS(message);
-    return res.redirect(302, link.long_url);
-}   
+
+    try {
+        const cachedUrl = await redis.get(`R:${alias}`);
+        console.log(cachedUrl, "===");
+        if (cachedUrl) {
+            await recordAnalytics(req, alias);
+            return res.redirect(302, cachedUrl);
+        }
+
+        const link = await prisma.shortenedLink.findUnique({
+            where: { link_id: alias },
+            select: { long_url: true }
+        });
+
+        if (!link) {
+            return res.redirect(302, `${FRONTEND_URL}/404`);
+        }
+
+        console.log(link.long_url);
+        await redis.set(`R:${alias}`, link.long_url, 'EX', CACHE_TTL);
+
+        await recordAnalytics(req, alias);
+
+        return res.redirect(302, link.long_url);
+
+    } catch (error) {
+        logger.error('Redirect error:', error);
+        return res.redirect(302, `${FRONTEND_URL}/404`);
+    }
+};
+
+async function recordAnalytics(req: Request, alias: string) {
+    const data = {
+        ip: req.clientIp,
+        userAgent: req.headers['user-agent'],
+        alias,
+        timestamp: Date.now()
+    };
+
+    try {
+        await sendMessageToSQS(JSON.stringify(data));
+    } catch (error) {
+        logger.error('Analytics error:', error);
+    }
+}
